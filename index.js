@@ -7,8 +7,8 @@ const github = require("github-scraper");
 const pdf = require('html-pdf');
 
 const generateHTML = require("./generateHTML");
-// const generateHTML2 = require("./generateHTML2");
 
+// My varibles for my github call
 let profileImage;
 let userName;
 let userLocation;
@@ -19,13 +19,12 @@ let numRepo;
 let numFollowers;
 let numGithubStars;
 let numUsersFollowing;
-// variable for company 
 let userCompany;
 
 const writeFileAsync = util.promisify(fs.writeFile);
 const appendFileAsync = util.promisify(fs.appendFile);
 
-
+// Asking user for their github username and favorite color
 function promptUser() {
   return inquirer.prompt([{
     message: "Enter your github name",
@@ -48,11 +47,10 @@ function promptUser() {
       color,
     }) {
       const queryURL = `https://api.github.com/users/${username}`;
-      console.log(username);
-      console.log(color);
+      // console.log(username);
+      // console.log(color);
 
-      const html = generateHTML(color);
-      // console.log(html);
+      let html = generateHTML(color);
       writeFileAsync("index.html", html);
 
       userFavColor = color;
@@ -71,34 +69,34 @@ function promptUser() {
         numUserFollowing = results.data.following;
         userCompany = results.data.company;
 
-        // axios.get(queryURL2).then(function (results2) {
-        //     console.log(results2);
-        // });
+        // console.log(results);
 
         github(username, function (err, data) {
-          const html = generateHTML2(data.userInfo);
-          return appendFileAsync("index.html", html);
-
+          var generatedHtml = generateHTML2(data.stars);
+          appendFileAsync('index.html', generatedHtml).then(function () {
+            // code to create pdf
+            var readHtml = fs.readFileSync("index.html", "utf8");
+            var options = {
+              "height": "10.5in",
+              "width": "8in",
+            };
+            pdf.create(readHtml, options).toFile(`./${username}-profile.pdf`, function (err, res) {
+              console.log(res);
+              if (err) {
+                console.log(err);
+              } else {
+                console.log('works');
+              }
+            });
+          })
         });
 
       })
-
-        .then(function () {
-          // code to create pdf
-          let html = fs.readFileSync("index.html", "utf8");
-          let options = {
-            format: "Letter"
-          };
-
-          pdf.create(html, options).toFile('./developerprofile.pdf', function (err, res) {
-            if (err) return console.log(err);
-            console.log(res); // { filename: '' }
-          });
-        })
     });
 }
 
-function generateHTML2(userInfo) {
+// function to append the index.html with the information from the github call
+function generateHTML2(stars) {
   return `
       </head>
       <body>
@@ -146,7 +144,7 @@ function generateHTML2(userInfo) {
               <div class="card col">
                 <h2>GitHub Stars</h2>
                 <!--arbitrary value-->
-                <h3>${userInfo}</h3>
+                <h3>${stars}</h3>
               </div>
               <div class="card col">
                 <h2>Following</h2>
